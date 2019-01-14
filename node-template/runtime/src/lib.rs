@@ -211,10 +211,6 @@ impl_runtime_apis! {
 			VERSION
 		}
 
-		fn authorities() -> Vec<Ed25519AuthorityId> {
-			Consensus::authorities()
-		}
-
 		fn execute_block(block: Block) {
 			Executive::execute_block(block)
 		}
