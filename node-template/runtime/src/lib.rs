@@ -6,14 +6,8 @@
 #![recursion_limit="256"]
 
 #[cfg(feature = "std")]
-#[macro_use]
-extern crate serde_derive;
-
-use substrate_client as client;
-
-#[macro_use]
-extern crate parity_codec_derive;
-
+use serde_derive::{Serialize, Deserialize};
+use parity_codec_derive::{Encode, Decode};
 use rstd::prelude::*;
 #[cfg(feature = "std")]
 use primitives::bytes;
@@ -38,7 +32,7 @@ pub use timestamp::Call as TimestampCall;
 pub use balances::Call as BalancesCall;
 pub use runtime_primitives::{Permill, Perbill};
 pub use timestamp::BlockPeriod;
-pub use srml_support::{StorageValue, construct_runtime};
+pub use support::{StorageValue, construct_runtime};
 
 /// Alias to Ed25519 pubkey that identifies an account on the chain.
 pub type AccountId = primitives::H256;

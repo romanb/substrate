@@ -25,6 +25,7 @@ mod params;
 pub mod error;
 pub mod informant;
 
+use client::ExecutionStrategies;
 use runtime_primitives::traits::As;
 use service::{
 	ServiceFactory, FactoryFullConfiguration, RuntimeGenesis,
@@ -351,17 +352,19 @@ where
 
 	let role =
 		if cli.light {
-			config.block_execution_strategy = service::ExecutionStrategy::NativeWhenPossible;
 			service::Roles::LIGHT
 		} else if cli.validator || cli.shared_params.dev {
-			config.block_execution_strategy = service::ExecutionStrategy::Both;
 			service::Roles::AUTHORITY
 		} else {
-			config.block_execution_strategy = service::ExecutionStrategy::NativeWhenPossible;
 			service::Roles::FULL
 		};
 
-	config.block_execution_strategy = cli.execution.into();
+	config.execution_strategies = ExecutionStrategies {
+		syncing: cli.syncing_execution.into(),
+		importing: cli.importing_execution.into(),
+		block_construction: cli.block_construction_execution.into(),
+		other: cli.other_execution.into(),
+	};
 
 	config.roles = role;
 	let client_id = config.client_id();
@@ -536,10 +539,7 @@ where
 	E: IntoExit,
 	S: FnOnce(&str) -> Result<Option<ChainSpec<FactoryGenesis<F>>>, String>,
 {
-	let mut config = create_config_with_db_path::<F, _>(spec_factory, &cli.shared_params, version)?;
-
-	config.block_execution_strategy = cli.execution.into();
-	config.api_execution_strategy = cli.api_execution.into();
+	let config = create_config_with_db_path::<F, _>(spec_factory, &cli.shared_params, version)?;
 
 	let file: Box<Read> = match cli.input {
 		Some(filename) => Box::new(File::open(filename)?),
@@ -650,8 +650,9 @@ fn init_logger(pattern: &str) {
 	let enable_color = isatty;
 
 	builder.format(move |buf, record| {
+		let now = time::now();
 		let timestamp =
-			time::strftime("%Y-%m-%d %H:%M:%S", &time::now())
+			time::strftime("%Y-%m-%d %H:%M:%S", &now)
 				.expect("Error formatting log timestamp");
 
 		let mut output = if log::max_level() <= log::LevelFilter::Info {
@@ -660,6 +661,8 @@ fn init_logger(pattern: &str) {
 			let name = ::std::thread::current()
 				.name()
 				.map_or_else(Default::default, |x| format!("{}", Colour::Blue.bold().paint(x)));
+			let millis = (now.tm_nsec as f32 / 1000000.0).round() as usize;
+			let timestamp = format!("{}.{:03}", timestamp, millis);
 			format!(
 				"{} {} {} {}  {}",
 				Colour::Black.bold().paint(timestamp),
