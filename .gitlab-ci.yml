@@ -3,6 +3,7 @@
 
 
 stages:
+  - merge-test
   - test
   - build
   - publish
@@ -35,10 +36,27 @@ cache:
 
 
 
+#### stage:                        merge-test
+
+check:merge:conflict:
+  stage:                           merge-test
+  image:                           parity/tools:latest
+  cache:                           {}
+  tags:
+    - linux-docker
+  only:
+    - /^[0-9]+$/
+  variables:
+    GITHUB_API:                    "https://api.github.com"
+  script:
+    - ./scripts/gitlab/check_merge_conflict.sh
+
+
+
 
 #### stage:                        test
 
-test:runtime:
+check:runtime:
   stage:                           test
   image:                           parity/tools:latest
   cache:                           {}
