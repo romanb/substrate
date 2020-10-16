@@ -117,7 +117,6 @@ pub fn build_transport(
 		}
 
 		core::upgrade::SelectUpgrade::new(yamux_config, mplex_config)
-		// mplex_config
 	};
 
 	let transport = transport.upgrade(upgrade::Version::V1)
